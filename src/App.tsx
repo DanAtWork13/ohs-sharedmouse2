@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 function App() {
 	const [count, setCount] = useState("Click me");
 
-	async function runRequest(): string {
-		const response = await fetch("/api/hellorld");
-		const data = await response.json();
-		return data.message;
+	function runRequest():string {
+		const response = new Request("/api/hellorld");
+		return response.json().message;
 	}
 
 

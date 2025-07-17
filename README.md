@@ -6,11 +6,12 @@ Build a collaborative interface (in React.js) where multiple users can see each 
 Each cursor should display the user's name and a unique color.
 When users move their mouse, their cursor position should update for all connected clients using WebSockets.
 Some things you might explore or add:
-* Unique name and color per user
-* "User joined" / "User left" indicators
-* Show a message box where users can leave a message
-* Smooth animations for cursor movement
-This is open-ended, so feel free to get creative. When it's ready, send us a link to the live demo (Vercel) and your GitHub repo.
+
+- Unique name and color per user
+- "User joined" / "User left" indicators
+- Show a message box where users can leave a message
+- Smooth animations for cursor movement
+  This is open-ended, so feel free to get creative. When it's ready, send us a link to the live demo (Vercel) and your GitHub repo.
 
 ## My interpretation:
 

@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "ohs-sharedmouse2.esproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ohs-sharedmouse-ws\\ohs-sharedmouse-ws.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

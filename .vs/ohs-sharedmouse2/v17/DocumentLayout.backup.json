@@ -1,12 +1,12 @@
 {
-  "Version": 1,
-  "WorkspaceRootPath": "D:\\dev\\VC-repos\\ohs-sharedmouse2\\",
-  "Documents": [],
-  "DocumentGroupContainers": [
-    {
-      "Orientation": 0,
-      "VerticalTabListWidth": 256,
-      "DocumentGroups": []
-    }
-  ]
+	"Version": 1,
+	"WorkspaceRootPath": "D:\\dev\\VC-repos\\ohs-sharedmouse2\\",
+	"Documents": [],
+	"DocumentGroupContainers": [
+		{
+			"Orientation": 0,
+			"VerticalTabListWidth": 256,
+			"DocumentGroups": []
+		}
+	]
 }

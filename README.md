@@ -1,69 +1,49 @@
-# React + TypeScript + Vite
+# task 3: shared mouse web app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## original instructions:
 
-Currently, two official plugins are available:
+Build a collaborative interface (in React.js) where multiple users can see each other�s cursors moving on the screen in real time. Each cursor should display the user�s name and a unique color.
+When users move their mouse, their cursor position should update for all connected clients using WebSockets.
+Some things you might explore or add:
+� Unique name and color per user
+� �User joined� / �User left� indicators
+� Show a message box where users can leave a message
+� Smooth animations for cursor movement
+This is open-ended, so feel free to get creative. When it�s ready, send us a link to the live demo (Vercel) and your GitHub repo.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## My interpretation:
 
-## Expanding the ESLint configuration
+- Figure out how to host an app on vercel
+  - Figure out how to run server-side code on vercel/vite/etc
+- install prettier, tailwindcss and shadcn components cause they look good
+- design api
+- write server code to:
+  - create WS server that listens for messages from clients, then distributes them to the other connected clients
+- create the UI pages: login, usage, admin?
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### API
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- The 4 types of messages to describe the actions of the client to the server
+- By "reflection", i mean the server will recieve the message from one client, then broadcast it out unmodified to all other connected clients
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+1. login
+   - contains client ext IP, username and color. triggers server->client reflection
+   - server will store ip and name association, to use later
+   - clients will allocate the relevant structs for the new user
+   - called only from the login page
+2. logout
+   - contains ext IP. triggers reflection. both clients and server free structs and stop listening for this client
+   - called only from the logout button on the main page
+3. local mouse movement
+   - called whenever the main page's main component detects a mouse movement within its boundaries
+   - contains ext IP and x/y coords of cursor. does not trigger reflection
+   - server will translate ip->name, then send remote mouse movement message to other clients
+4. remote mouse movement
+   - only sent from server to clients after recieving a local mouse move
+   - contains the name of the mover, and x/y coords. cannot trigger reflection
+   - clients will each individually update the relevant pointer object with the new information
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### UI design
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Top row: two text fields with your name and the number of connected clients, a logout button
+- rest of screen is uncolored box where local cursor is replaced by colored cursor w/your name attached. remote cursors appear the same way

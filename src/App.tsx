@@ -6,8 +6,9 @@ function App() {
 	const [count, setCount] = useState("Click me");
 
 	function runRequest():string {
-		const response = new Request("/api/hellorld");
-		return response.json().message;
+		//const response = new Request("/api/hellorld");
+		//return (await response.json()).message;
+		return "fuck";
 	}
 
 

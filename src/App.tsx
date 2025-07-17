@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "src/components/ui/button";
+//import { Button } from "src/components/ui/button";
 //import "./App.css";
 
 function App() {
@@ -16,7 +16,7 @@ function App() {
 		<>
 			<h1>Vercel Functions test</h1>
 			<div className="card">
-				<Button onClick={() => setCount(runRequest())}>{count}</Button>
+				<button onClick={() => setCount(runRequest())}>{count}</button>
 				<p>
 					Click to test function
 				</p>

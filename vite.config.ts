@@ -8,6 +8,8 @@ export default defineConfig({
 	plugins: [react(), tailwindcss()],
 	server: {
 		port: 58505,
+		host: true,
+		allowedHosts: ["thelettuceclub.myddns.me", ".thelettuceclub.myddns.me"],
 	},
 	resolve: {
 		alias: {

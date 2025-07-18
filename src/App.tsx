@@ -48,14 +48,14 @@ function MouseCaptureZone({ name, color }: { name: string; color: string }) {
 
 	//pseudo function to send current x/y whenever it changes
 	if (prevX != x || prevY != y) {
-		console.log("sending new coords");
+		//console.log("sending new coords");
 		webSocket.send(JSON.stringify({ name: name, color: color, x: x, y: y }));
 		prevX = x;
 		prevY = y;
 	}
 
 	webSocket.onmessage = function (e) {
-		console.log("WS recieved: " + e.data);
+		//console.log("WS recieved: " + e.data);
 		const data = JSON.parse(e.data as string) as Peer;
 		const idx = peers.findIndex((elem) => elem.name === data.name);
 		if (idx != -1) {
@@ -116,7 +116,7 @@ function App() {
 	});
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
-		console.log("submitted with name = %s, color = %s", data.name, color);
+		//console.log("submitted with name = %s, color = %s", data.name, color);
 		setName(data.name);
 		peers = [];
 	}

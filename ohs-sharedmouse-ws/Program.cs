@@ -7,7 +7,7 @@ namespace ohs_sharedmouse_ws
     {
         protected override void OnMessage(MessageEventArgs e)
         {
-            Console.WriteLine("recieved: {0}", e.Data);
+            //Console.WriteLine("recieved: {0}", e.Data);
             Sessions.BroadcastAsync(e.Data,null);
         }
     }
@@ -16,7 +16,6 @@ namespace ohs_sharedmouse_ws
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
             WebSocketServer wssv = new(58324);
             //wssv.Log.Level = LogLevel.Trace;
             wssv.AddWebSocketService<MsgHandler>("/");
@@ -31,9 +30,10 @@ namespace ohs_sharedmouse_ws
                 }
             }
 
-            Console.WriteLine("\nPress Enter key to stop the server...");
+            Console.WriteLine("\nKill this process to close server...");
 
-            Console.ReadLine();
+            //Console.ReadLine();
+            while (true) {}
 
             // Stop the server.
             wssv.Stop();

@@ -17,10 +17,7 @@ namespace ohs_sharedmouse_ws
         static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
-            WebSocketServer wssv = new(58324, true);
-            
-            wssv.SslConfiguration.ServerCertificate = new("SharedMouse.pfx", "Once4Upon6An1Mid!^");
-            wssv.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Default;
+            WebSocketServer wssv = new(58324);
             //wssv.Log.Level = LogLevel.Trace;
             wssv.AddWebSocketService<MsgHandler>("/");
             wssv.Start();

@@ -1,23 +1,23 @@
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 //import "./App.css";
 
-//todo: create colorable and nameable cursor in svg here
+
 function MouseFollower({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
+	const nameClassString = "text-xs text-"+color.toLowerCase()+"-600";
 	return (
 		<>
 			<div style={{ position: "relative", top: y, left: x }}>
 				<svg fill={color} height="16" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 391.751 391.751" transform="matrix(-1, 0, 0, 1, 0, 0)">
 					<path d="M389.2,2.803c-2.4-2.4-5.6-2.8-8.8-1.6L4.8,154.403c-2.8,1.6-4.8,4.4-4.8,8c0,3.6,2.4,6.4,5.6,7.2l125.2,40.4l-94.8,94.8 c-4.8,4.8-7.2,10.8-7.2,17.2s2.4,12.4,7.2,17.2l16.8,16.8c4.8,4.8,10.8,7.2,17.2,7.2c6.4,0,12.4-2.4,17.2-7.2l94.4-94.4l40,124 c1.2,3.2,4,5.6,7.2,5.6h0.4c3.2,0,6-2,7.2-4.8l154.8-374.4C392.4,8.403,391.6,5.203,389.2,2.803z M229.6,359.603l-37.2-115.6 c-0.8-2.8-3.2-4.8-5.6-5.2c-0.8,0-1.2-0.4-2-0.4c-2,0-4,0.8-5.6,2.4l-103.6,103.6c-3.2,3.2-8.4,3.2-11.6,0l-16.8-16.8 c-1.6-1.6-2.4-3.6-2.4-5.6s0.8-4,2.4-5.6l104-104c2-2,2.8-4.8,2-7.6c-0.8-2.8-2.8-4.8-5.2-5.6l-116.8-37.6l337.6-138 L229.6,359.603z" />
 				</svg>
-				{name}
+				<p className={nameClassString}>{name}</p>
 			</div>
 		</>
 	);
@@ -25,11 +25,11 @@ function MouseFollower({ x, y, name, color }: { x: number; y: number; name: stri
 
 let prevX = 0;
 let prevY = 0;
-const webSocket = new WebSocket("ws://192.168.2.116:58324/");
+const webSocket = new WebSocket("ws://192.168.2.228:58324/");
 
 webSocket.onerror = function () {
 	console.log("WS error");
-	webSocket.close();
+	this.close();
 };
 
 interface Peer {
@@ -63,8 +63,9 @@ function MouseCaptureZone({ name, color }: { name: string; color: string }) {
 		} else {
 			peers.push(data);
 		}
-		setRecMsgCnt(recMsgCnt + 1);
+		setRecMsgCnt(recMsgCnt+1);
 	};
+	
 
 	function handlePointMove(ev: React.PointerEvent<HTMLDivElement>) {
 		//console.log("clientX: %d, clientY: %d", ev.clientX, ev.clientY);
@@ -73,7 +74,7 @@ function MouseCaptureZone({ name, color }: { name: string; color: string }) {
 	}
 
 	function peerToMouse() {
-		const rows = [];
+		const rows:JSX.Element[] = [];
 		peers.forEach((peer) => {
 			if (peer.name !== name) {
 				rows.push(<MouseFollower x={peer.x} y={peer.y - 40} name={peer.name} color={peer.color} />);

@@ -3,13 +3,6 @@ using WebSocketSharp.Server;
 
 namespace ohs_sharedmouse_ws
 {
-    internal struct Message
-    {
-        string name;
-        int x;
-        int y;
-    }
-
     internal class MsgHandler : WebSocketBehavior
     {
         protected override void OnMessage(MessageEventArgs e)
@@ -30,12 +23,12 @@ namespace ohs_sharedmouse_ws
             wssv.Start();
             if (wssv.IsListening)
             {
-                var fmt = "Listening on port {0}, and providing WebSocket services:";
+                Console.WriteLine("Listening on port {0}, and providing WebSocket services:", wssv.Port);
 
-                Console.WriteLine(fmt, wssv.Port);
-
-                foreach (var path in wssv.WebSocketServices.Paths)
+                foreach (string path in wssv.WebSocketServices.Paths)
+                {
                     Console.WriteLine("- {0}", path);
+                }
             }
 
             Console.WriteLine("\nPress Enter key to stop the server...");

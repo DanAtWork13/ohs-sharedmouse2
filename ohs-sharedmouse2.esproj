@@ -12,4 +12,9 @@
     <None Remove="ohs-sharedmouse-ws\**" />
     <TypeScriptConfiguration Remove="ohs-sharedmouse-ws\**" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="killWS.sh" />
+    <None Remove="prodbuild.sh" />
+    <None Remove="startWS.sh" />
+  </ItemGroup>
 </Project>

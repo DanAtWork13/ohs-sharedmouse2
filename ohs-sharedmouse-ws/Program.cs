@@ -33,7 +33,7 @@ namespace ohs_sharedmouse_ws
             Console.WriteLine("\nKill this process to close server...");
 
             //Console.ReadLine();
-            while (true) {}
+            while (true) { Thread.Yield(); }
 
             // Stop the server.
             wssv.Stop();

@@ -3,14 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 //import "./App.css";
 
-
 function MouseFollower({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
-	const nameClassString = "text-xs text-"+color.toLowerCase()+"-600";
+	const nameClassString = "text-xs text-" + color.toLowerCase() + "-600";
 	return (
 		<>
 			<div style={{ position: "relative", top: y, left: x }}>
@@ -26,7 +25,11 @@ function MouseFollower({ x, y, name, color }: { x: number; y: number; name: stri
 let prevX = 0;
 let prevY = 0;
 const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
-//const webSocket = new WebSocket("ws://localhost:58324/"); //for local testing
+//const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
+
+webSocket.onopen = function () {
+	this.send(JSON.stringify({ msgtype: 0, id: "0" }));
+};
 
 webSocket.onerror = function () {
 	console.log("WS error");
@@ -34,6 +37,8 @@ webSocket.onerror = function () {
 };
 
 interface Peer {
+	msgtype: number;
+	id: string;
 	name: string;
 	color: string;
 	x: number;
@@ -42,7 +47,7 @@ interface Peer {
 
 let peers: Peer[] = [];
 
-function MouseCaptureZone({ name, color }: { name: string; color: string }) {
+function MouseCaptureZone({ name, color, id }: { name: string; color: string; id: string }) {
 	const [x, setX] = useState(0);
 	const [y, setY] = useState(0);
 	const [recMsgCnt, setRecMsgCnt] = useState(0);
@@ -50,7 +55,7 @@ function MouseCaptureZone({ name, color }: { name: string; color: string }) {
 	//pseudo function to send current x/y whenever it changes
 	if (prevX != x || prevY != y) {
 		//console.log("sending new coords");
-		webSocket.send(JSON.stringify({ name: name, color: color, x: x, y: y }));
+		webSocket.send(JSON.stringify({ msgtype: 1, id: id, name: name, color: color, x: x, y: y }));
 		prevX = x;
 		prevY = y;
 	}
@@ -59,14 +64,15 @@ function MouseCaptureZone({ name, color }: { name: string; color: string }) {
 		//console.log("WS recieved: " + e.data);
 		const data = JSON.parse(e.data as string) as Peer;
 		const idx = peers.findIndex((elem) => elem.name === data.name);
-		if (idx != -1) {
-			peers[idx] = data;
-		} else {
-			peers.push(data);
+		if (data.id === id) {
+			if (idx != -1) {
+				peers[idx] = data;
+			} else {
+				peers.push(data);
+			}
+			setRecMsgCnt(recMsgCnt + 1);
 		}
-		setRecMsgCnt(recMsgCnt+1);
 	};
-	
 
 	function handlePointMove(ev: React.PointerEvent<HTMLDivElement>) {
 		//console.log("clientX: %d, clientY: %d", ev.clientX, ev.clientY);
@@ -75,7 +81,7 @@ function MouseCaptureZone({ name, color }: { name: string; color: string }) {
 	}
 
 	function peerToMouse() {
-		const rows:JSX.Element[] = [];
+		const rows: JSX.Element[] = [];
 		peers.forEach((peer) => {
 			if (peer.name !== name) {
 				rows.push(<MouseFollower x={peer.x} y={peer.y - 40} name={peer.name} color={peer.color} />);
@@ -103,23 +109,32 @@ const FormSchema = z.object({
 	name: z.string().min(2, {
 		message: "Username must be at least 2 characters.",
 	}),
+	id: z.string().min(1, { message: "ID must be at least 1 character" }),
 });
 
 function App() {
 	const [name, setName] = useState("No Name" + getRandomInt(10000));
 	const [color, setColor] = useState("Red");
+	const [id, setID] = useState("0");
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
 		defaultValues: {
-			name: "",
+			name: name,
+			id: id,
 		},
 	});
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
 		//console.log("submitted with name = %s, color = %s", data.name, color);
 		setName(data.name);
+		webSocket.send(JSON.stringify({ msgtype: 2, id: data.id, oldID: id }));
+		setID(data.id);
 		peers = [];
+	}
+
+	window.onbeforeunload = () => {
+		webSocket.close();
 	}
 
 	return (
@@ -131,7 +146,8 @@ function App() {
 							control={form.control}
 							name="name"
 							render={({ field }) => (
-								<FormItem>
+								<FormItem className="flex">
+									<FormLabel>Name:</FormLabel>
 									<FormControl>
 										<Input placeholder="name" {...field} />
 									</FormControl>
@@ -139,7 +155,20 @@ function App() {
 								</FormItem>
 							)}
 						/>
-						<Button type="submit">Set Name</Button>
+						<FormField
+							control={form.control}
+							name="id"
+							render={({ field }) => (
+								<FormItem className="flex">
+									<FormLabel>ID:</FormLabel>
+									<FormControl>
+										<Input placeholder="id" {...field} />
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<Button type="submit">Set Name/Room</Button>
 					</form>
 				</Form>
 				<DropdownMenu>
@@ -157,7 +186,7 @@ function App() {
 				</DropdownMenu>
 				<p>Scroll down to align your real mouse to the virtual one!</p>
 			</div>
-			<MouseCaptureZone name={name} color={color} />
+			<MouseCaptureZone name={name} color={color} id={id} />
 		</>
 	);
 }

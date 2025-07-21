@@ -23,8 +23,7 @@ Some things you might explore or add:
 	- Scale client coords by screen size
 	- authentication -->> user joined/left toasts
 	- message boxes
-- Figure out why its intermittently dying
-- Get a more powerful VM
+- <>
 
 
 ## My interpretation:

@@ -6,7 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {MouseMove, BaseMessage, TextBoxCreate, TextBoxDelete} from "./structs.ts";
 //import "./App.css";
+
+
+//TODO: figure out how to create a functional for a floating, interactive text box, possibly using SVG from here: https://www.w3schools.com/graphics/svg_text.asp
+function TextBox({ x, y, name, color, content }: { x: number, y: number, name: string, color: string, content: string }) {
+	return (
+		<>
+			<div style={{ position: "relative", top: y, left: x }}>
+				<svg fill="gray" height="220" width="220" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 391.751 391.751" transform="matrix(-1, 0, 0, 1, 0, 0)">
+					<rect width="220" height="220">
+						
+					</rect>
+					<text x="0" y="12" fill={color}>{name}</text>
+
+				</svg>
+			</div>
+		</>
+	);
+}
 
 function MouseFollower({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
 	const nameClassString = "text-xs text-" + color.toLowerCase() + "-600";
@@ -24,11 +43,11 @@ function MouseFollower({ x, y, name, color }: { x: number; y: number; name: stri
 
 let prevX = 0;
 let prevY = 0;
-const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
-//const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
+//const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
+const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
 
 webSocket.onopen = function () {
-	this.send(JSON.stringify({ msgtype: 0, id: "0" }));
+	this.send(JSON.stringify({ msgtype: 0, id: 0 }));
 };
 
 webSocket.onerror = function () {
@@ -36,18 +55,10 @@ webSocket.onerror = function () {
 	this.close();
 };
 
-interface Peer {
-	msgtype: number;
-	id: string;
-	name: string;
-	color: string;
-	x: number;
-	y: number;
-}
+let peers: MouseMove[] = [];
+let boxes: TextBoxCreate[] = [];
 
-let peers: Peer[] = [];
-
-function MouseCaptureZone({ name, color, id }: { name: string; color: string; id: string }) {
+function MouseCaptureZone({ name, color, id }: { name: string; color: string; id: number }) {
 	const [x, setX] = useState(0);
 	const [y, setY] = useState(0);
 	const [recMsgCnt, setRecMsgCnt] = useState(0);
@@ -60,9 +71,8 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		prevY = y;
 	}
 
-	webSocket.onmessage = function (e) {
-		//console.log("WS recieved: " + e.data);
-		const data = JSON.parse(e.data as string) as Peer;
+	function MouseMoveHandler(e: string) {
+		const data = JSON.parse(e) as MouseMove;
 		const idx = peers.findIndex((elem) => elem.name === data.name);
 		if (data.id === id) {
 			if (idx != -1) {
@@ -72,6 +82,48 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 			}
 			setRecMsgCnt(recMsgCnt + 1);
 		}
+	}
+
+	function TextBoxCreateHandler(e: string) {
+		const data = JSON.parse(e) as TextBoxCreate;
+		boxes.push(data);
+		setRecMsgCnt(recMsgCnt + 1);
+	}
+
+	function TextBoxDeleteHandler(e: string) {
+		const data = JSON.parse(e) as TextBoxDelete;
+		boxes.splice(boxes.findIndex((value) =>
+		{
+			if (value.key == data.key) {
+				return true;
+			}
+			return false;
+		}), 1);
+		setRecMsgCnt(recMsgCnt + 1);
+	}
+
+	webSocket.onmessage = function (e) {
+		//console.log("WS recieved: " + e.data);
+		const data = JSON.parse(e.data as string) as BaseMessage;
+		switch (data.msgtype) {
+			case 1:
+				setTimeout(() => {MouseMoveHandler(e.data as string);}, 1);
+				break;
+
+			case 3:
+				setTimeout(() => {TextBoxCreateHandler(e.data as string);}, 1);
+				break;
+
+			case 4:
+				setTimeout(() => {TextBoxDeleteHandler(e.data as string);}, 1);
+				break;
+
+			case 5: //the first message of a box broadcast clears the current boxes
+				setTimeout(() => { boxes = []; TextBoxCreateHandler(e.data as string); }, 1);
+				break;
+		}
+
+		
 	};
 
 	function handlePointMove(ev: React.PointerEvent<HTMLDivElement>) {
@@ -96,6 +148,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 			<div onPointerMove={handlePointMove} style={{ backgroundColor: "lightyellow" }} className="h-dvh">
 				<MouseFollower x={x} y={y} name={name} color={color} />
 				{peerToMouse()}
+				<TextBox x={100} y={100} name={name} color={color} content="hellorld" />
 			</div>
 		</>
 	);
@@ -109,13 +162,14 @@ const FormSchema = z.object({
 	name: z.string().min(2, {
 		message: "Username must be at least 2 characters.",
 	}),
-	id: z.string().min(1, { message: "ID must be at least 1 character" }),
+	id: z.coerce.number().gt(0, { message: "id must be greater than 0" }),
 });
+
 
 function App() {
 	const [name, setName] = useState("No Name" + getRandomInt(10000));
 	const [color, setColor] = useState("Red");
-	const [id, setID] = useState("0");
+	const [id, setID] = useState(0);
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
@@ -126,16 +180,17 @@ function App() {
 	});
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
-		//console.log("submitted with name = %s, color = %s", data.name, color);
+		//console.log("submitted with name = %s, color = %s, id = %d", data.name, color, data.id);
 		setName(data.name);
 		webSocket.send(JSON.stringify({ msgtype: 2, id: data.id, oldID: id }));
 		setID(data.id);
 		peers = [];
+		boxes = [];
 	}
 
 	window.onbeforeunload = () => {
 		webSocket.close();
-	}
+	};
 
 	return (
 		<>
@@ -162,7 +217,7 @@ function App() {
 								<FormItem className="flex">
 									<FormLabel>ID:</FormLabel>
 									<FormControl>
-										<Input placeholder="id" {...field} />
+										<Input placeholder="id" type="number" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>

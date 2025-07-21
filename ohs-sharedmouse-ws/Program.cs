@@ -73,7 +73,7 @@ namespace ohs_sharedmouse_ws
         protected override void OnClose(CloseEventArgs e)
         {
             mut.WaitOne();
-            Console.WriteLine("Removed session {0}", ID);
+            //Console.WriteLine("Removed session {0}", ID);
             rooms.Remove(ID);
             mut.ReleaseMutex();
             base.OnClose(e);
@@ -100,13 +100,13 @@ namespace ohs_sharedmouse_ws
                 }
             }
 
-            Console.WriteLine("\nKill this process to close server...");
+            Console.WriteLine("Kill this process to close server...");
 
             //Console.ReadLine();
             while (true) { Thread.Sleep(Timeout.Infinite); }
 
-            // Stop the server.
-            wssv.Stop();
+            // Stop the server. (Unreachable)
+            //wssv.Stop();
         }
     }
 }

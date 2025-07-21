@@ -26,6 +26,7 @@ function MouseFollower({ x, y, name, color }: { x: number; y: number; name: stri
 let prevX = 0;
 let prevY = 0;
 const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
+//const webSocket = new WebSocket("ws://localhost:58324/"); //for local testing
 
 webSocket.onerror = function () {
 	console.log("WS error");

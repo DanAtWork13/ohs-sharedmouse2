@@ -20,6 +20,8 @@ export class MouseMove extends BaseMessage //type = 1
 export class TextBoxCreate extends BaseMessage //type = 3 or 5 when broadcast
 {
     key: number = 0;
+    x: number = 0;
+    y: number = 0;
     creator: string = "";
     color: string = "";
     content: string = "";

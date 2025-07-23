@@ -25,6 +25,16 @@ Some things you might explore or add:
 	- message boxes
 - <>
 
+I think the server is having syncronization issues. The symptom is that, after creating some boxes on one id, boxes can't be created on any other id. The box creation handler runs, but immediately exist while aquiring the mutBoxes mutex for entirely unclear reasons. It may be that BoxBroadcaster, because it runs continuously, and for longer periods, is somehow screwing up BoxCreate's mutex grab, so it can't finish running and exits.
+
+I've also observed sometimes the BoxBroadcaster thread kinda dies, potentially with both mutexes held, so all the other handler functions stack up or exit immediately. It didn't used to happen, then it started to repeatedly despite undoing changes.
+
+Tried putting threads in ThreadPool to run in background, to no change.
+
+maybe have BoxBroadcaster be session specific, i.e have the thread spawned in onopen, deleted in onclose
+
+also the positioning of the spawned boxes is all over the map for unclear reasons
+
 
 ## My interpretation:
 - Figure out how to host an app on vercel

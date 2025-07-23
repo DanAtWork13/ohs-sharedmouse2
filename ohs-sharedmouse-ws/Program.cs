@@ -18,6 +18,7 @@ namespace ohs_sharedmouse_ws
         public MsgHandler()
         {
             boxBroadCaster = new(BoxBroadcaster);
+            boxBroadCaster.Name = "BoxBroadcaster";
             boxBroadCaster.Start();
         }
 
@@ -59,63 +60,62 @@ namespace ohs_sharedmouse_ws
 
         internal void BoxCreateHandler(object? data)
         {
+            Console.WriteLine("Got to box create handler");
             string message = (string)data!;
             TextBoxCreate tbc = JsonSerializer.Deserialize<TextBoxCreate>(message)!;
             mutBoxes.WaitOne();
-            textBoxes.Append(tbc);
+            textBoxes.Add(tbc);
             mutBoxes.ReleaseMutex();
-            int id = tbc.id;
-            mutRoom.WaitOne();
-            foreach (var k in rooms)
-            {
-                if (k.Value == id)
-                {
-                    if (Sessions.TryGetSession(k.Key, out _))
-                    {
-                        Sessions.SendTo(message, k.Key);
-                    }
-                    else
-                    {
-                        rooms.Remove(k.Key);
-                        Sessions.Sweep();
-                    }
-                }
-            }
-            mutRoom.ReleaseMutex();
+            //int id = tbc.id;
+            //mutRoom.WaitOne();
+            //foreach (var k in rooms)
+            //{
+            //    if (k.Value == id)
+            //    {
+            //        if (Sessions.TryGetSession(k.Key, out _))
+            //        {
+            //            Sessions.SendTo(message, k.Key);
+            //        }
+            //        else
+            //        {
+            //            rooms.Remove(k.Key);
+            //            Sessions.Sweep();
+            //        }
+            //    }
+            //}
+            //mutRoom.ReleaseMutex();
         }
 
         internal void BoxDeleteHandler(object? data)
         {
+            Console.WriteLine("Got to box delete handler");
             string message = (string)data!;
             TextBoxDelete tbd = JsonSerializer.Deserialize<TextBoxDelete>(message)!;
             mutBoxes.WaitOne();
-            textBoxes.Remove(textBoxes.Find(x =>
-                            {
-                                if (x.key == tbd.key)
-                                {
-                                    return true;
-                                }
-                                return false;
-                            }));
-            mutBoxes.ReleaseMutex();
-            int id = tbd.id;
-            mutRoom.WaitOne();
-            foreach (var k in rooms)
+            TextBoxCreate? tbcish = textBoxes.Find(x => {return x.key == tbd.key;});
+            if (tbcish != null)
             {
-                if (k.Value == id)
-                {
-                    if (Sessions.TryGetSession(k.Key, out _))
-                    {
-                        Sessions.SendTo(message, k.Key);
-                    }
-                    else
-                    {
-                        rooms.Remove(k.Key);
-                        Sessions.Sweep();
-                    }
-                }
+                textBoxes.Remove(tbcish);
             }
-            mutRoom.ReleaseMutex();
+            mutBoxes.ReleaseMutex();
+            //int id = tbd.id;
+            //mutRoom.WaitOne();
+            //foreach (var k in rooms)
+            //{
+            //    if (k.Value == id)
+            //    {
+            //        if (Sessions.TryGetSession(k.Key, out _))
+            //        {
+            //            Sessions.SendTo(message, k.Key);
+            //        }
+            //        else
+            //        {
+            //            rooms.Remove(k.Key);
+            //            Sessions.Sweep();
+            //        }
+            //    }
+            //}
+            //mutRoom.ReleaseMutex();
         }
 
         internal void BoxBroadcaster(object? data)
@@ -123,26 +123,28 @@ namespace ohs_sharedmouse_ws
             // occasionally tells all connected sessions about any boxes that are in their session.
             while (true)
             {
-                Thread.Sleep(550);
-                if (textBoxes.Count == 0) { continue; }
+                Thread.Sleep(555);
+                if (textBoxes.Count == 0) { Console.WriteLine("nothing to boxbroadcast"); continue; }
+                Console.WriteLine("Got to box broadcaster");
                 mutRoom.WaitOne();
                 foreach (var k in rooms)
                 {
                     int id = k.Value;
-                    string[] boxesJSON = [];
+                    List<string> boxesJSON = [];
                     mutBoxes.WaitOne();
                     List<TextBoxCreate> sessionBoxes = textBoxes.FindAll(x =>
                     {
-                        if (x.key == id)
+                        if (x.id == id)
                         {
                             return true;
                         }
                         return false;
                     });
-                    sessionBoxes[0].key = 5;
+                    if (sessionBoxes.Count == 0) { continue; }
+                    sessionBoxes[0].msgtype = 5;
                     foreach (var tbc in sessionBoxes)
                     {
-                        _ = boxesJSON.Append(JsonSerializer.Serialize<TextBoxCreate>(tbc));
+                        boxesJSON.Add(JsonSerializer.Serialize<TextBoxCreate>(tbc));
                     }
                     mutBoxes.ReleaseMutex();
 
@@ -182,15 +184,22 @@ namespace ohs_sharedmouse_ws
                     break;
 
                 case 2:
+                    // room change, ensures room ids change correctly
                     new Thread(RoomMoveHandler).Start(e.Data);
                     break;
 
                 case 3:
+                    // text box creation
                     new Thread(BoxCreateHandler).Start(e.Data);
                     break;
 
                 case 4:
+                    // text box deletion
                     new Thread(BoxDeleteHandler).Start(e.Data);
+                    break;
+
+                case 5:
+                    //unused on recieve side because broadcaster uses it as special signal
                     break;
             }
         }
@@ -201,7 +210,6 @@ namespace ohs_sharedmouse_ws
             //Console.WriteLine("Removed session {0}", ID);
             rooms.Remove(ID);
             mutRoom.ReleaseMutex();
-            base.OnClose(e);
         }
     }
 
@@ -228,10 +236,10 @@ namespace ohs_sharedmouse_ws
             Console.WriteLine("Kill this process to close server...");
 
             //Console.ReadLine();
-            while (true) { Thread.Sleep(Timeout.Infinite); }
+            Thread.Sleep(Timeout.Infinite);
 
-            // Stop the server. (Unreachable)
-            //wssv.Stop();
+            // Stop the server.
+            wssv.Stop();
         }
     }
 }

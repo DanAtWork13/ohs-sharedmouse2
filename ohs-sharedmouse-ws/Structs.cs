@@ -22,6 +22,8 @@
     public class TextBoxCreate : BaseMessage //type = 3 or 5 when broadcast
     {
         public int key { get; set; }
+        public float x { get; set; }
+        public float y { get; set; }
         public required string creator { get; set; }
         public required string color { get; set; }
         public required string content { get; set; }

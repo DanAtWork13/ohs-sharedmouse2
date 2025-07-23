@@ -1,4 +1,4 @@
-import { useState, type JSX } from "react";
+import { useState, type JSX, type MouseEventHandler } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -6,21 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import {MouseMove, BaseMessage, TextBoxCreate, TextBoxDelete} from "./structs.ts";
 //import "./App.css";
 
 
-//TODO: figure out how to create a functional for a floating, interactive text box, possibly using SVG from here: https://www.w3schools.com/graphics/svg_text.asp
 function TextBox({ x, y, name, color, content }: { x: number, y: number, name: string, color: string, content: string }) {
 	return (
 		<>
 			<div style={{ position: "relative", top: y, left: x }}>
-				<svg fill="gray" height="220" width="220" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 391.751 391.751" transform="matrix(-1, 0, 0, 1, 0, 0)">
-					<rect width="220" height="220">
-						
-					</rect>
-					<text x="0" y="12" fill={color}>{name}</text>
-
+				<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+					<rect width="220" height="220" fill="#1E1E1E" />
+					<rect id="Rectangle 1" x="0.5" y="0.5" width="219" height="219" fill="#949494" stroke={color} />
+					<rect y="20" width="219" height="1" fill="white"/>
+					<text y="15" textRendering="optimizeLegibility" fill="white">{name}</text>
+					<text y="40" textRendering="optimizeLegibility" fill="white">{content}</text>
 				</svg>
 			</div>
 		</>
@@ -58,10 +72,14 @@ webSocket.onerror = function () {
 let peers: MouseMove[] = [];
 let boxes: TextBoxCreate[] = [];
 
+let lastRCX = 0;
+let lastRCY = 0;
+
 function MouseCaptureZone({ name, color, id }: { name: string; color: string; id: number }) {
 	const [x, setX] = useState(0);
 	const [y, setY] = useState(0);
 	const [recMsgCnt, setRecMsgCnt] = useState(0);
+	const [open, setOpen] = useState(false);
 
 	//pseudo function to send current x/y whenever it changes
 	if (prevX != x || prevY != y) {
@@ -85,12 +103,14 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	}
 
 	function TextBoxCreateHandler(e: string) {
+		console.log("got to text box create handler");
 		const data = JSON.parse(e) as TextBoxCreate;
 		boxes.push(data);
 		setRecMsgCnt(recMsgCnt + 1);
 	}
 
 	function TextBoxDeleteHandler(e: string) {
+		console.log("got to text box delete handler");
 		const data = JSON.parse(e) as TextBoxDelete;
 		boxes.splice(boxes.findIndex((value) =>
 		{
@@ -122,8 +142,6 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 				setTimeout(() => { boxes = []; TextBoxCreateHandler(e.data as string); }, 1);
 				break;
 		}
-
-		
 	};
 
 	function handlePointMove(ev: React.PointerEvent<HTMLDivElement>) {
@@ -142,14 +160,62 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		return rows;
 	}
 
+	function spawnTextBoxDialog(event:React.MouseEvent<HTMLDivElement, MouseEvent>) {
+		console.log("right-clicked at x: %d, y: %d", event.clientX, event.clientY);
+		lastRCX = event.clientX;
+		lastRCY = event.clientY;
+	}
+
+	function spawnTextBox() {
+		const text = document.getElementById("textField")!.value; //ignore this error
+		if (text !== null) {
+			console.log("sending new box. text: %s", text);
+			webSocket.send(JSON.stringify({ msgtype: 3, id: id, key: getRandomInt(15386), x: lastRCX, y: lastRCY, creator: name, color: color, content: text }));
+		}
+		setOpen(false);
+	}
+
+	function textToBox() {
+		const rows: JSX.Element[] = [];
+		boxes.forEach((box) => {
+			rows.push(<TextBox x={box.x-64} y={box.y-278} key={box.key} color={box.color} content={box.content} name={box.creator} />);
+		});
+		return rows;
+	}
+
 	//disable normal cursor by adding cursor-none to className
 	return (
 		<>
-			<div onPointerMove={handlePointMove} style={{ backgroundColor: "lightyellow" }} className="h-dvh">
-				<MouseFollower x={x} y={y} name={name} color={color} />
-				{peerToMouse()}
-				<TextBox x={100} y={100} name={name} color={color} content="hellorld" />
-			</div>
+			<Dialog open={open} onOpenChange={setOpen}>
+				<ContextMenu>
+					<ContextMenuTrigger>
+						<div onPointerMove={handlePointMove} style={{ backgroundColor: "lightyellow" }} className="h-dvh">
+							<MouseFollower x={x} y={y} name={name} color={color} />
+							{peerToMouse()}
+							{textToBox()}
+						</div>
+					</ContextMenuTrigger>
+					<ContextMenuContent className="w-52">
+						<DialogTrigger asChild>
+							<ContextMenuItem inset onClick={spawnTextBoxDialog}>
+							Create text box
+							</ContextMenuItem>
+						</DialogTrigger>
+					</ContextMenuContent>
+				</ContextMenu>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Create text box</DialogTitle>
+						<DialogDescription>
+							Type the text you want visible here
+						</DialogDescription>
+					</DialogHeader>
+					<Input id="textField" />
+					<DialogFooter>
+						<Button type="submit" onClick={spawnTextBox}>Confirm</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }

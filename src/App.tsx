@@ -1,4 +1,4 @@
-import { useState, type JSX, type MouseEventHandler } from "react";
+import { useState, type JSX } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -6,36 +6,34 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
-import {MouseMove, BaseMessage, TextBoxCreate, TextBoxDelete} from "./structs.ts";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MouseMove, BaseMessage, TextBoxCreate, TextBoxDelete, RoomUpdate } from "./structs.ts";
 //import "./App.css";
 
+function TextBox({ id, x, y, name, color, content, ukey }: { id: number; x: number; y: number; name: string; color: string; content: string; ukey: number }) {
+	function deleteTextBox() {
+		//console.log("button deleted ukey: %s", ukey);
+		webSocket.send(JSON.stringify(new TextBoxDelete(id, ukey)));
+	}
 
-function TextBox({ x, y, name, color, content }: { x: number, y: number, name: string, color: string, content: string }) {
 	return (
 		<>
 			<div style={{ position: "relative", top: y, left: x }}>
 				<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
 					<rect width="220" height="220" fill="#1E1E1E" />
-					<rect id="Rectangle 1" x="0.5" y="0.5" width="219" height="219" fill="#949494" stroke={color} />
-					<rect y="20" width="219" height="1" fill="white"/>
-					<text y="15" textRendering="optimizeLegibility" fill="white">{name}</text>
-					<text y="40" textRendering="optimizeLegibility" fill="white">{content}</text>
+					<rect x="0.5" y="0.5" width="219" height="219" fill="#949494" stroke={color} />
+					<rect y="20" width="219" height="1" fill="white" />
+					<text y="15" x="2" textRendering="optimizeLegibility" fill="white">
+						{name}
+					</text>
+					<text y="40" x="2" textRendering="optimizeLegibility" fill="white">
+						{content}
+					</text>
 				</svg>
+				<Button style={{ position: "relative", top: -222, left: 195, width: 20, height: 20 }} size="sm" onClick={deleteTextBox}>
+					x
+				</Button>
 			</div>
 		</>
 	);
@@ -61,7 +59,7 @@ let prevY = 0;
 const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
 
 webSocket.onopen = function () {
-	this.send(JSON.stringify({ msgtype: 0, id: 0 }));
+	this.send(JSON.stringify(new BaseMessage(0, 0)));
 };
 
 webSocket.onerror = function () {
@@ -84,7 +82,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	//pseudo function to send current x/y whenever it changes
 	if (prevX != x || prevY != y) {
 		//console.log("sending new coords");
-		webSocket.send(JSON.stringify({ msgtype: 1, id: id, name: name, color: color, x: x, y: y }));
+		webSocket.send(JSON.stringify(new MouseMove(id, name, color, x, y)));
 		prevX = x;
 		prevY = y;
 	}
@@ -112,13 +110,14 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	function TextBoxDeleteHandler(e: string) {
 		console.log("got to text box delete handler");
 		const data = JSON.parse(e) as TextBoxDelete;
-		boxes.splice(boxes.findIndex((value) =>
-		{
-			if (value.key == data.key) {
-				return true;
-			}
-			return false;
-		}), 1);
+		console.log(boxes);
+		boxes.splice(
+			boxes.findIndex((value) => {
+				return value.key == data.key;
+			}),
+			1,
+		);
+		console.log(boxes);
 		setRecMsgCnt(recMsgCnt + 1);
 	}
 
@@ -127,19 +126,28 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		const data = JSON.parse(e.data as string) as BaseMessage;
 		switch (data.msgtype) {
 			case 1:
-				setTimeout(() => {MouseMoveHandler(e.data as string);}, 1);
+				setTimeout(() => {
+					MouseMoveHandler(e.data as string);
+				}, 1);
 				break;
 
 			case 3:
-				setTimeout(() => {TextBoxCreateHandler(e.data as string);}, 1);
+				setTimeout(() => {
+					TextBoxCreateHandler(e.data as string);
+				}, 1);
 				break;
 
 			case 4:
-				setTimeout(() => {TextBoxDeleteHandler(e.data as string);}, 1);
+				setTimeout(() => {
+					TextBoxDeleteHandler(e.data as string);
+				}, 1);
 				break;
 
 			case 5: //the first message of a box broadcast clears the current boxes
-				setTimeout(() => { boxes = []; TextBoxCreateHandler(e.data as string); }, 1);
+				setTimeout(() => {
+					boxes = [];
+					TextBoxCreateHandler(e.data as string);
+				}, 1);
 				break;
 		}
 	};
@@ -160,7 +168,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		return rows;
 	}
 
-	function spawnTextBoxDialog(event:React.MouseEvent<HTMLDivElement, MouseEvent>) {
+	function spawnTextBoxDialog(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
 		console.log("right-clicked at x: %d, y: %d", event.clientX, event.clientY);
 		lastRCX = event.clientX;
 		lastRCY = event.clientY;
@@ -170,7 +178,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		const text = document.getElementById("textField")!.value; //ignore this error
 		if (text !== null) {
 			console.log("sending new box. text: %s", text);
-			webSocket.send(JSON.stringify({ msgtype: 3, id: id, key: getRandomInt(15386), x: lastRCX, y: lastRCY, creator: name, color: color, content: text }));
+			webSocket.send(JSON.stringify(new TextBoxCreate(id, getRandomInt(15386), lastRCX, lastRCY, name, color, text)));
 		}
 		setOpen(false);
 	}
@@ -178,7 +186,8 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	function textToBox() {
 		const rows: JSX.Element[] = [];
 		boxes.forEach((box) => {
-			rows.push(<TextBox x={box.x-64} y={box.y-278} key={box.key} color={box.color} content={box.content} name={box.creator} />);
+			//console.log("rendering box %d", box.key);
+			rows.push(<TextBox id={id} x={box.x - 64} y={box.y - 278} ukey={box.key} color={box.color} content={box.content} name={box.creator} />);
 		});
 		return rows;
 	}
@@ -198,7 +207,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 					<ContextMenuContent className="w-52">
 						<DialogTrigger asChild>
 							<ContextMenuItem inset onClick={spawnTextBoxDialog}>
-							Create text box
+								Create text box
 							</ContextMenuItem>
 						</DialogTrigger>
 					</ContextMenuContent>
@@ -206,13 +215,13 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Create text box</DialogTitle>
-						<DialogDescription>
-							Type the text you want visible here
-						</DialogDescription>
+						<DialogDescription>Type the text you want visible here</DialogDescription>
 					</DialogHeader>
 					<Input id="textField" />
 					<DialogFooter>
-						<Button type="submit" onClick={spawnTextBox}>Confirm</Button>
+						<Button type="submit" onClick={spawnTextBox}>
+							Confirm
+						</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
@@ -228,9 +237,48 @@ const FormSchema = z.object({
 	name: z.string().min(2, {
 		message: "Username must be at least 2 characters.",
 	}),
-	id: z.coerce.number().gt(0, { message: "id must be greater than 0" }),
+	id: z.string().check((ctx) => {
+		console.log("got to formschema id check");
+		console.log(ctx.value);
+		console.log(typeof ctx.value);
+		console.log(ctx.issues);
+		const input: number = parseInt(ctx.value);
+		if (input == null || isNaN(input)) {
+			ctx.issues.push({
+				code: "invalid_element",
+				message: "Number entry only field",
+				input: ctx.value,
+				origin: "map",
+				key: "ie",
+				issues: [],
+			});
+		}
+		if (input < 0) {
+			ctx.issues.push({
+				code: "too_small",
+				message: "Cannot enter rooms < 0",
+				input: input,
+				origin: "map",
+				key: "ts",
+				issues: [],
+				minimum: 0,
+			});
+		}
+		if (input > 10000) {
+			ctx.issues.push({
+				code: "too_big",
+				message: "Cannot enter rooms > 10000",
+				input: input,
+				origin: "map",
+				key: "tb",
+				issues: [],
+				maximum: 10000,
+			});
+		}
+	}),
 });
 
+//z.number().gt(0, { message: "id must be greater than 0" }).lt(10000, "id must be less than 10000"),
 
 function App() {
 	const [name, setName] = useState("No Name" + getRandomInt(10000));
@@ -241,15 +289,15 @@ function App() {
 		resolver: zodResolver(FormSchema),
 		defaultValues: {
 			name: name,
-			id: id,
+			id: id.toString(),
 		},
 	});
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
 		//console.log("submitted with name = %s, color = %s, id = %d", data.name, color, data.id);
 		setName(data.name);
-		webSocket.send(JSON.stringify({ msgtype: 2, id: data.id, oldID: id }));
-		setID(data.id);
+		webSocket.send(JSON.stringify(new RoomUpdate(parseInt(data.id), id)));
+		setID(parseInt(data.id));
 		peers = [];
 		boxes = [];
 	}
@@ -270,7 +318,7 @@ function App() {
 								<FormItem className="flex">
 									<FormLabel>Name:</FormLabel>
 									<FormControl>
-										<Input placeholder="name" {...field} />
+										<Input {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -283,7 +331,7 @@ function App() {
 								<FormItem className="flex">
 									<FormLabel>ID:</FormLabel>
 									<FormControl>
-										<Input placeholder="id" type="number" {...field} />
+										<Input type="number" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>

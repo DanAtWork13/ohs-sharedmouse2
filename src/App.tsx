@@ -18,45 +18,41 @@ function TextBox({ id, x, y, name, color, content, ukey }: { id: number; x: numb
 	}
 
 	return (
-		<>
-			<div style={{ position: "relative", top: y, left: x }}>
-				<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-					<rect width="220" height="220" fill="#1E1E1E" />
-					<rect x="0.5" y="0.5" width="219" height="219" fill="#949494" stroke={color} />
-					<rect y="20" width="219" height="1" fill="white" />
-					<text y="15" x="2" textRendering="optimizeLegibility" fill="white">
-						{name}
-					</text>
-					<text y="40" x="2" textRendering="optimizeLegibility" fill="white">
-						{content}
-					</text>
-				</svg>
-				<Button style={{ position: "relative", top: -222, left: 195, width: 20, height: 20 }} size="sm" onClick={deleteTextBox}>
-					x
-				</Button>
-			</div>
-		</>
+		<div style={{ position: "absolute", top: y + 48, left: x, width: 220, height: 220 }}>
+			<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+				<rect width="220" height="220" fill="#1E1E1E" />
+				<rect x="0.5" y="0.5" width="219" height="219" fill="#949494" stroke={color} />
+				<rect y="20" width="219" height="1" fill="white" />
+				<text y="15" x="2" textRendering="optimizeLegibility" fill="white">
+					{name}
+				</text>
+				<foreignObject y="20" x="2" height="200" width="210">
+					<p className="text-wrap w-53 h-50 break-all wrap-anywhere text-white">{content}</p>
+				</foreignObject>
+			</svg>
+			<Button style={{ position: "relative", top: -222, left: 195, width: 20, height: 20 }} size="sm" onClick={deleteTextBox}>
+				x
+			</Button>
+		</div>
 	);
 }
 
+// svg here slightly modifed from https://www.svgrepo.com/svg/179339/pointer-arrows (CC0 license)
 function MouseFollower({ x, y, name, color }: { x: number; y: number; name: string; color: string }) {
-	const nameClassString = "text-xs text-" + color.toLowerCase() + "-600";
 	return (
-		<>
-			<div style={{ position: "relative", top: y, left: x }}>
-				<svg fill={color} height="16" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 391.751 391.751" transform="matrix(-1, 0, 0, 1, 0, 0)">
-					<path d="M389.2,2.803c-2.4-2.4-5.6-2.8-8.8-1.6L4.8,154.403c-2.8,1.6-4.8,4.4-4.8,8c0,3.6,2.4,6.4,5.6,7.2l125.2,40.4l-94.8,94.8 c-4.8,4.8-7.2,10.8-7.2,17.2s2.4,12.4,7.2,17.2l16.8,16.8c4.8,4.8,10.8,7.2,17.2,7.2c6.4,0,12.4-2.4,17.2-7.2l94.4-94.4l40,124 c1.2,3.2,4,5.6,7.2,5.6h0.4c3.2,0,6-2,7.2-4.8l154.8-374.4C392.4,8.403,391.6,5.203,389.2,2.803z M229.6,359.603l-37.2-115.6 c-0.8-2.8-3.2-4.8-5.6-5.2c-0.8,0-1.2-0.4-2-0.4c-2,0-4,0.8-5.6,2.4l-103.6,103.6c-3.2,3.2-8.4,3.2-11.6,0l-16.8-16.8 c-1.6-1.6-2.4-3.6-2.4-5.6s0.8-4,2.4-5.6l104-104c2-2,2.8-4.8,2-7.6c-0.8-2.8-2.8-4.8-5.2-5.6l-116.8-37.6l337.6-138 L229.6,359.603z" />
-				</svg>
-				<p className={nameClassString}>{name}</p>
-			</div>
-		</>
+		<div style={{ position: "relative", top: y, left: x }}>
+			<svg fill={color} height="16" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 391.751 391.751" transform="matrix(-1, 0, 0, 1, 0, 0)">
+				<path d="M389.2,2.803c-2.4-2.4-5.6-2.8-8.8-1.6L4.8,154.403c-2.8,1.6-4.8,4.4-4.8,8c0,3.6,2.4,6.4,5.6,7.2l125.2,40.4l-94.8,94.8 c-4.8,4.8-7.2,10.8-7.2,17.2s2.4,12.4,7.2,17.2l16.8,16.8c4.8,4.8,10.8,7.2,17.2,7.2c6.4,0,12.4-2.4,17.2-7.2l94.4-94.4l40,124 c1.2,3.2,4,5.6,7.2,5.6h0.4c3.2,0,6-2,7.2-4.8l154.8-374.4C392.4,8.403,391.6,5.203,389.2,2.803z M229.6,359.603l-37.2-115.6 c-0.8-2.8-3.2-4.8-5.6-5.2c-0.8,0-1.2-0.4-2-0.4c-2,0-4,0.8-5.6,2.4l-103.6,103.6c-3.2,3.2-8.4,3.2-11.6,0l-16.8-16.8 c-1.6-1.6-2.4-3.6-2.4-5.6s0.8-4,2.4-5.6l104-104c2-2,2.8-4.8,2-7.6c-0.8-2.8-2.8-4.8-5.2-5.6l-116.8-37.6l337.6-138 L229.6,359.603z" />
+			</svg>
+			<p className="text-xs text-black-600">{name}</p>
+		</div>
 	);
 }
 
 let prevX = 0;
 let prevY = 0;
-const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
-//const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
+//const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
+const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
 
 webSocket.onopen = function () {
 	this.send(JSON.stringify(new BaseMessage(0, 0)));
@@ -69,9 +65,6 @@ webSocket.onerror = function () {
 
 let peers: MouseMove[] = [];
 let boxes: TextBoxCreate[] = [];
-
-let lastRCX = 0;
-let lastRCY = 0;
 
 function MouseCaptureZone({ name, color, id }: { name: string; color: string; id: number }) {
 	const [x, setX] = useState(0);
@@ -101,23 +94,23 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	}
 
 	function TextBoxCreateHandler(e: string) {
-		console.log("got to text box create handler");
+		//console.log("got to text box create handler");
 		const data = JSON.parse(e) as TextBoxCreate;
 		boxes.push(data);
 		setRecMsgCnt(recMsgCnt + 1);
 	}
 
 	function TextBoxDeleteHandler(e: string) {
-		console.log("got to text box delete handler");
+		//console.log("got to text box delete handler");
 		const data = JSON.parse(e) as TextBoxDelete;
-		console.log(boxes);
+		//console.log(boxes);
 		boxes.splice(
 			boxes.findIndex((value) => {
 				return value.key == data.key;
 			}),
 			1,
-		);
-		console.log(boxes);
+		); //can have dangerous effects if given -1, but that doesn't seem to happen so not worrying
+		//console.log(boxes);
 		setRecMsgCnt(recMsgCnt + 1);
 	}
 
@@ -129,6 +122,10 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 				setTimeout(() => {
 					MouseMoveHandler(e.data as string);
 				}, 1);
+				break;
+
+			case 2:
+				// roomupdates are never sent to clients
 				break;
 
 			case 3:
@@ -168,17 +165,11 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		return rows;
 	}
 
-	function spawnTextBoxDialog(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-		console.log("right-clicked at x: %d, y: %d", event.clientX, event.clientY);
-		lastRCX = event.clientX;
-		lastRCY = event.clientY;
-	}
-
 	function spawnTextBox() {
-		const text = (document.getElementById("textField")! as HTMLInputElement).value;
+		const text = escapeHTML((document.getElementById("textField")! as HTMLInputElement).value);
 		if (text !== null) {
-			console.log("sending new box. text: %s", text);
-			webSocket.send(JSON.stringify(new TextBoxCreate(id, getRandomInt(15386), lastRCX, lastRCY, name, color, text)));
+			console.log("sending new box. text: %s. pos: %d,%d", text, x, y);
+			webSocket.send(JSON.stringify(new TextBoxCreate(id, getRandomInt(15386), x, y, name, color, text)));
 		}
 		setOpen(false);
 	}
@@ -187,45 +178,40 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 		const rows: JSX.Element[] = [];
 		boxes.forEach((box) => {
 			//console.log("rendering box %d", box.key);
-			rows.push(<TextBox id={id} x={box.x - 64} y={box.y - 278} ukey={box.key} color={box.color} content={box.content} name={box.creator} />);
+			rows.push(<TextBox id={id} x={box.x} y={box.y} ukey={box.key} color={box.color} content={box.content} name={box.creator} />);
 		});
 		return rows;
 	}
 
-	//disable normal cursor by adding cursor-none to className
 	return (
-		<>
-			<Dialog open={open} onOpenChange={setOpen}>
-				<ContextMenu>
-					<ContextMenuTrigger>
-						<div onPointerMove={handlePointMove} style={{ backgroundColor: "lightyellow" }} className="h-dvh">
-							<MouseFollower x={x} y={y} name={name} color={color} />
-							{peerToMouse()}
-							{textToBox()}
-						</div>
-					</ContextMenuTrigger>
-					<ContextMenuContent className="w-52">
-						<DialogTrigger asChild>
-							<ContextMenuItem inset onClick={spawnTextBoxDialog}>
-								Create text box
-							</ContextMenuItem>
-						</DialogTrigger>
-					</ContextMenuContent>
-				</ContextMenu>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Create text box</DialogTitle>
-						<DialogDescription>Type the text you want visible here</DialogDescription>
-					</DialogHeader>
-					<Input id="textField" />
-					<DialogFooter>
-						<Button type="submit" onClick={spawnTextBox}>
-							Confirm
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
-		</>
+		<Dialog open={open} onOpenChange={setOpen}>
+			<ContextMenu>
+				<ContextMenuTrigger>
+					<div onPointerMove={handlePointMove} className="h-dvh overflow-hidden bg-yellow-100">
+						<MouseFollower x={x} y={y} name={name} color={color} />
+						{peerToMouse()}
+						{textToBox()}
+					</div>
+				</ContextMenuTrigger>
+				<ContextMenuContent className="w-52">
+					<DialogTrigger asChild>
+						<ContextMenuItem inset>Create text box</ContextMenuItem>
+					</DialogTrigger>
+				</ContextMenuContent>
+			</ContextMenu>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Create text box</DialogTitle>
+					<DialogDescription>Type the text you want visible here</DialogDescription>
+				</DialogHeader>
+				<Input id="textField" />
+				<DialogFooter>
+					<Button type="submit" onClick={spawnTextBox}>
+						Confirm
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 
@@ -233,15 +219,19 @@ function getRandomInt(max: number) {
 	return Math.floor(Math.random() * max);
 }
 
+function escapeHTML(str: string) {
+	return str.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+}
+
 const FormSchema = z.object({
 	name: z.string().min(2, {
 		message: "Username must be at least 2 characters.",
 	}),
 	id: z.string().check((ctx) => {
-		console.log("got to formschema id check");
-		console.log(ctx.value);
-		console.log(typeof ctx.value);
-		console.log(ctx.issues);
+		//console.log("got to formschema id check");
+		//console.log(ctx.value);
+		//console.log(typeof ctx.value);
+		//console.log(ctx.issues);
 		const input: number = parseInt(ctx.value);
 		if (input == null || isNaN(input)) {
 			ctx.issues.push({
@@ -278,10 +268,8 @@ const FormSchema = z.object({
 	}),
 });
 
-//z.number().gt(0, { message: "id must be greater than 0" }).lt(10000, "id must be less than 10000"),
-
 function App() {
-	const [name, setName] = useState("No Name" + getRandomInt(10000));
+	const [name, setName] = useState("No Name #" + getRandomInt(10000));
 	const [color, setColor] = useState("Red");
 	const [id, setID] = useState(0);
 
@@ -295,11 +283,14 @@ function App() {
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
 		//console.log("submitted with name = %s, color = %s, id = %d", data.name, color, data.id);
-		setName(data.name);
+		setName(escapeHTML(data.name));
 		webSocket.send(JSON.stringify(new RoomUpdate(parseInt(data.id), id)));
 		setID(parseInt(data.id));
+		if (parseInt(data.id) != id) {
+			// server doesn't re-send boxes if the old and new ids are the same, so don't preemptively delete them
+			boxes = [];
+		}
 		peers = [];
-		boxes = [];
 	}
 
 	window.onbeforeunload = () => {
@@ -346,14 +337,22 @@ function App() {
 					</DropdownMenuTrigger>
 					<DropdownMenuContent className="w-56">
 						<DropdownMenuRadioGroup value={color} onValueChange={setColor}>
-							<DropdownMenuRadioItem value="Red">Red</DropdownMenuRadioItem>
-							<DropdownMenuRadioItem value="Blue">Blue</DropdownMenuRadioItem>
-							<DropdownMenuRadioItem value="Green">Green</DropdownMenuRadioItem>
-							<DropdownMenuRadioItem value="Black">Black</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="red">Red</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="blue">Blue</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="green">Green</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="black">Black</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="orange">Orange</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="gray">Gray</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="pink">Pink</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value="purple">Purple</DropdownMenuRadioItem>
 						</DropdownMenuRadioGroup>
 					</DropdownMenuContent>
 				</DropdownMenu>
-				<p>Scroll down to align your real mouse to the virtual one!</p>
+				<p className="text-sm">
+					Scroll down to align your real mouse to the virtual one! Right click to create a text box. Set and share a name and numeric ID to collaborate privately.
+					<br />
+					This site doesn't work on mobile devices.
+				</p>
 			</div>
 			<MouseCaptureZone name={name} color={color} id={id} />
 		</>

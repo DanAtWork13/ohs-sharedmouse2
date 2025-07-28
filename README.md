@@ -12,28 +12,21 @@ Some things you might explore or add:
 - This is open-ended, so feel free to get creative. When it's ready, send us a link to the live demo (Vercel) and your GitHub repo.
 
 ## What is done:
-- UI/frontend is mostly done. It's basic but functional.
-	- Has colors and names and ability to show data from server
-- WS server exists. Incredibly basic, as it just reflects all incoming messages to other clients but it mostly works.
-	- Occasionally has fatal errors on release mode, unsure of why
+- UI/frontend is done. It's functional with a few minor issues.
+	- Has all the requisite features of the task, except toast messages
+	- 8 total user selectable colors
+	- Informative text for confused users
+- WS server fully functional
+	- able to support all the message types in the project and runs in background correctly
+	- used to have thread sync issues, but those seem to have been resolved
 - Vercel hosting dropped in favor of Azure-based solution (see notes).
+	- Works great, have some scripts to automate production builds and such.
 
 ## TODO:
-- Make the server smarter to be able to handle the extra goals in the instructions
-	- Scale client coords by screen size
-	- authentication -->> user joined/left toasts
-	- message boxes
-- <>
+- test stuff with more people
 
-I think the server is having syncronization issues. The symptom is that, after creating some boxes on one id, boxes can't be created on any other id. The box creation handler runs, but immediately exist while aquiring the mutBoxes mutex for entirely unclear reasons. It may be that BoxBroadcaster, because it runs continuously, and for longer periods, is somehow screwing up BoxCreate's mutex grab, so it can't finish running and exits.
 
-I've also observed sometimes the BoxBroadcaster thread kinda dies, potentially with both mutexes held, so all the other handler functions stack up or exit immediately. It didn't used to happen, then it started to repeatedly despite undoing changes.
-
-Tried putting threads in ThreadPool to run in background, to no change.
-
-maybe have BoxBroadcaster be session specific, i.e have the thread spawned in onopen, deleted in onclose
-
-also the positioning of the spawned boxes is all over the map for unclear reasons
+Old info that isn't relevant:
 
 
 ## My interpretation:

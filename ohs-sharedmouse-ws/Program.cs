@@ -14,15 +14,14 @@ namespace ohs_sharedmouse_ws
         private static List<TextBoxCreate> textBoxes = new(); // holds the text boxes for all rooms until deleted
         private static Mutex mutBoxes = new(false);
 
-        internal void MouseMoveHandler(object? data)
+        private void MouseMoveHandler(object? data)
         {
             string message = (string)data!;
-            MouseMove mm = JsonSerializer.Deserialize<MouseMove>(message)!;
-            int id = mm.id;
+            int mm = JsonSerializer.Deserialize<MouseMove>(message)!.id;
             mutRoom.WaitOne();
             foreach (var k in rooms)
             {
-                if (k.Value == id)
+                if (k.Value == mm)
                 {
                     if (Sessions.TryGetSession(k.Key, out _))
                     {
@@ -37,29 +36,30 @@ namespace ohs_sharedmouse_ws
             mutRoom.ReleaseMutex();
         }
 
-        internal void RoomMoveHandler(object? data)
+        private void RoomMoveHandler(object? data)
         {
             string message = (string)data!;
             RoomUpdate ru = JsonSerializer.Deserialize<RoomUpdate>(message)!;
             int newID = ru.id;
-            int oldID = ru.oldID;
-            if (oldID == newID) { return; }
+            if (ru.oldID == newID) { return; } // don't change anything if there isn't an actual change requested
             mutRoom.WaitOne();
-            rooms[ID] = newID;
+            rooms[ID] = newID; //update the room ID
             mutRoom.ReleaseMutex();
 
-            if (newID == 0) { return; }
+            // sending saved text boxes section
+            if (newID == 0) { return; } // can't have boxes on id 0 so don't bother running this code
             List<string> boxesJSON = [];
             mutBoxes.WaitOne();
-            List<TextBoxCreate> sessionBoxes = textBoxes.FindAll(x => { return x.id == newID; });
-            if (sessionBoxes.Count == 0) { mutBoxes.ReleaseMutex(); return; }
-            sessionBoxes[0].msgtype = 5;
-            foreach (var tbc in sessionBoxes)
+            List<TextBoxCreate> roomBoxes = textBoxes.FindAll(x => { return x.id == newID; }); //gets the boxes in the current room
+            if (roomBoxes.Count == 0) { mutBoxes.ReleaseMutex(); return; } // if there aren't any, stop
+            roomBoxes[0].msgtype = 5; // first one is type 5 so the client knows to reset it's box array
+            foreach (var tbc in roomBoxes)
             {
                 boxesJSON.Add(JsonSerializer.Serialize<TextBoxCreate>(tbc));
             }
             mutBoxes.ReleaseMutex();
 
+            // send the box creation messages to the client
             mutRoom.WaitOne();
             if (Sessions.TryGetSession(ID, out _))
             {
@@ -68,23 +68,23 @@ namespace ohs_sharedmouse_ws
                     Sessions.SendTo(oMessage, ID);
                 }
             }
-            else
+            else // if the session has gone away between the start of the function and now, don't send and dispose of it
             {
                 rooms.Remove(ID);
             }
             mutRoom.ReleaseMutex();
         }
 
-        internal void BoxCreateHandler(object? data)
+        private void BoxCreateHandler(object? data)
         {
             //Console.WriteLine("Got to box create handler");
             string message = (string)data!;
             TextBoxCreate tbc = JsonSerializer.Deserialize<TextBoxCreate>(message)!;
-            if (tbc.id == 0) { return; } //don't allow box creation on global room
+            int id = tbc.id;
+            if (id == 0) { return; } //don't allow box creation on global room
             mutBoxes.WaitOne();
             textBoxes.Add(tbc);
             mutBoxes.ReleaseMutex();
-            int id = tbc.id;
             mutRoom.WaitOne();
             foreach (var k in rooms)
             {
@@ -103,7 +103,7 @@ namespace ohs_sharedmouse_ws
             mutRoom.ReleaseMutex();
         }
 
-        internal void BoxDeleteHandler(object? data)
+        private void BoxDeleteHandler(object? data)
         {
             //Console.WriteLine("Got to box delete handler");
             string message = (string)data!;
@@ -130,7 +130,7 @@ namespace ohs_sharedmouse_ws
             mutRoom.ReleaseMutex();
         }
 
-        internal void InitialMessageHandler(object? data)
+        private void InitialMessageHandler(object? data)
         {
             BaseMessage bm = (BaseMessage)data!;
             mutRoom.WaitOne();
@@ -173,7 +173,7 @@ namespace ohs_sharedmouse_ws
                     break;
 
                 case 5:
-                    //unused on recieve side because broadcaster uses it as special signal
+                    //unused on recieve side because RoomMove uses it as special signal to the client(s)
                     break;
             }
         }
@@ -187,7 +187,7 @@ namespace ohs_sharedmouse_ws
                 roomCounts[rooms[ID]]--;
                 if (roomCounts[rooms[ID]] < 0) { roomCounts[rooms[ID]] = 0; }
                 rooms.Remove(ID);
-            } catch (KeyNotFoundException)
+            } catch (KeyNotFoundException) //can happen when trying to access a session id that has already been cleaned by another function, I think.
             {
                 //Console.WriteLine("Key not found: {0}", ID);
                 clean = false;
@@ -199,7 +199,8 @@ namespace ohs_sharedmouse_ws
             }
         }
 
-        internal void RoomCleaner()
+        //cleans the boxes out of rooms that are empty. only triggered when a client disconnects.
+        private void RoomCleaner()
         {
             Thread.Sleep(Random.Shared.Next(50, 550));
             mutRoom.WaitOne();
@@ -223,8 +224,8 @@ namespace ohs_sharedmouse_ws
             WebSocketServer wssv = new(58324);
             //wssv.Log.Level = LogLevel.Trace;
             wssv.AddWebSocketService<MsgHandler>("/");
-            wssv.KeepClean = true;
-            wssv.ReuseAddress = true;
+            wssv.KeepClean = true; // ensures old sessions are disconnected
+            wssv.ReuseAddress = true; // I think this is necessary for it to be accessible on Azure
             wssv.Start();
             if (wssv.IsListening)
             {
@@ -235,7 +236,7 @@ namespace ohs_sharedmouse_ws
             }
             
             Console.WriteLine("Kill this process to close server...");
-            Thread.Sleep(Timeout.Infinite);
+            Thread.Sleep(Timeout.Infinite); // keeps the process running forever in the background, but in a way that doesn't use 100% CPU.
 
             // Stop the server.
             wssv.Stop();

@@ -55,8 +55,8 @@ function MouseFollower({ x, y, name, color }: { x: number; y: number; name: stri
 
 let prevX = 0;
 let prevY = 0;
-const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
-//const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
+//const webSocket = new WebSocket("ws://thelettuceclub.myddns.me:58324/");
+const webSocket = new WebSocket("ws://192.168.2.116:58324/"); //for local testing
 
 webSocket.onopen = function () {
 	this.send(JSON.stringify(new BaseMessage(0, 0)));
@@ -175,7 +175,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	}
 
 	function spawnTextBox() {
-		const text = document.getElementById("textField")!.value; //ignore this error
+		const text = (document.getElementById("textField")! as HTMLInputElement).value;
 		if (text !== null) {
 			console.log("sending new box. text: %s", text);
 			webSocket.send(JSON.stringify(new TextBoxCreate(id, getRandomInt(15386), lastRCX, lastRCY, name, color, text)));

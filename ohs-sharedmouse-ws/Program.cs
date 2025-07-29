@@ -8,7 +8,7 @@ namespace ohs_sharedmouse_ws
     {
         // string = session id (this.ID, Sessions[]), int = logical room id
         private static Dictionary<string, int> rooms = new();
-        private static int[] roomCounts = new int[10000];
+        private static int[] roomCounts = new int[10001]; // to support 0-10000 inclusive, like client does
         private static Mutex mutRoom = new(false); //must own mut to interact with rooms
 
         private static List<TextBoxCreate> textBoxes = new(); // holds the text boxes for all rooms until deleted
@@ -77,7 +77,9 @@ namespace ohs_sharedmouse_ws
 
         private void BoxCreateHandler(object? data)
         {
-            //Console.WriteLine("Got to box create handler");
+#if DEBUG
+            Console.WriteLine("Got to box create handler");
+#endif
             string message = (string)data!;
             TextBoxCreate tbc = JsonSerializer.Deserialize<TextBoxCreate>(message)!;
             int id = tbc.id;
@@ -105,7 +107,9 @@ namespace ohs_sharedmouse_ws
 
         private void BoxDeleteHandler(object? data)
         {
-            //Console.WriteLine("Got to box delete handler");
+#if DEBUG
+            Console.WriteLine("Got to box delete handler");
+#endif
             string message = (string)data!;
             TextBoxDelete tbd = JsonSerializer.Deserialize<TextBoxDelete>(message)!;
             mutBoxes.WaitOne();
@@ -182,14 +186,18 @@ namespace ohs_sharedmouse_ws
         {
             bool clean = true;
             mutRoom.WaitOne();
-            //Console.WriteLine("Removed session {0}", ID);
+#if DEBUG
+            Console.WriteLine("Removed session {0}", ID);
+#endif
             try {
                 roomCounts[rooms[ID]]--;
                 if (roomCounts[rooms[ID]] < 0) { roomCounts[rooms[ID]] = 0; }
                 rooms.Remove(ID);
             } catch (KeyNotFoundException) //can happen when trying to access a session id that has already been cleaned by another function, I think.
             {
-                //Console.WriteLine("Key not found: {0}", ID);
+#if DEBUG
+                Console.WriteLine("Key not found: {0}", ID);
+#endif
                 clean = false;
             }
             mutRoom.ReleaseMutex();

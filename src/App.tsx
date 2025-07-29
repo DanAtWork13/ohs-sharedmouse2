@@ -166,7 +166,7 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 	}
 
 	function spawnTextBox() {
-		const text = escapeHTML((document.getElementById("textField")! as HTMLInputElement).value);
+		const text = (document.getElementById("textField")! as HTMLInputElement).value;
 		if (text !== null) {
 			console.log("sending new box. text: %s. pos: %d,%d", text, x, y);
 			webSocket.send(JSON.stringify(new TextBoxCreate(id, getRandomInt(15386), x, y, name, color, text)));
@@ -217,10 +217,6 @@ function MouseCaptureZone({ name, color, id }: { name: string; color: string; id
 
 function getRandomInt(max: number) {
 	return Math.floor(Math.random() * max);
-}
-
-function escapeHTML(str: string) {
-	return str.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }
 
 const FormSchema = z.object({
@@ -283,7 +279,7 @@ function App() {
 
 	function onSubmit(data: z.infer<typeof FormSchema>) {
 		//console.log("submitted with name = %s, color = %s, id = %d", data.name, color, data.id);
-		setName(escapeHTML(data.name));
+		setName(data.name);
 		webSocket.send(JSON.stringify(new RoomUpdate(parseInt(data.id), id)));
 		setID(parseInt(data.id));
 		if (parseInt(data.id) != id) {

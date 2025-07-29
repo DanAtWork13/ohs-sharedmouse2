@@ -24,6 +24,11 @@ Some things you might explore or add:
 
 ## TODO:
 - test stuff with more people
+- entering a room with many textboxes from multiple users only shows the most recent box(es)
+	- Deleting boxes that aren't on the other screen causes unrelated boxes to be deleted
+	- Or no boxes. Box sync appears totally broken if joined after boxes created. Maybe happens w/large number boxes from 3+ users
+- having many boxes quickly takes up the entire space
+- boxes can easily have their delete buttons covered. Amelia suggested context menu deleter
 
 
 Old info that isn't relevant:
